@@ -4,8 +4,8 @@ import json
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 
 # FlareSolverr configuration
 FLARESOLVERR_URL = "http://localhost:8191/v1"
@@ -46,43 +46,42 @@ def get_freeuse_mylf_movies():
     url = "https://members.mylf.com/oauth/login"
 
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument(r"user-data-dir=C:\Users\Nathan\AppData\Local\Google\Chrome\User Data\Profile 1")
 
-    driver = webdriver.Chrome(options=options)
+    chrome_path = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+
+    service = Service(executable_path=chrome_path)
+
+    driver = webdriver.Chrome(service=service, options=options)
 
     try:
-        # Use FlareSolverr to bypass Cloudflare
-        solved_response = solve_cloudflare(url)
-        if solved_response["status"] == "ok":
-            driver.get(url)
-            for cookie in solved_response["solution"]["cookies"]:
-                driver.add_cookie(cookie)
+        driver.get(url)
+        time.sleep(5)  # Wait for 5 seconds
+        print(f"Current URL: {driver.current_url}")
 
-            username_elem = driver.find_element(By.NAME, "username")
-            time.sleep(30)
-            username_elem.send_keys(username)
+        username_elem = driver.find_element(By.NAME, "email")
+        time.sleep(30)
+        username_elem.send_keys(username)
 
-            password_elem = driver.find_element(By.NAME, "password")
-            time.sleep(30)
-            password_elem.send_keys(password)
+        password_elem = driver.find_element(By.NAME, "password")
+        time.sleep(30)
+        password_elem.send_keys(password)
 
-            input("Press Enter to continue...")
+        input("Press Enter to continue...")
 
-            time.sleep(10)
+        time.sleep(10)
 
-            site = "https://members.mylf.com/site/freeuse-milf"
-            driver.get(site)
+        site = "https://members.mylf.com/site/freeuse-milf"
+        driver.get(site)
 
-            links = driver.find_elements(By.XPATH, "//a[contains(@class, 'card--movie__thumnbail-wrapper')]")
-            for link in links:
-                href = link.get_attribute("href")
-                print(href)
+        links = driver.find_elements(By.XPATH, "//a[contains(@class, 'card--movie__thumnbail-wrapper')]")
+        for link in links:
+            href = link.get_attribute("href")
+            print(href)
 
-                if "https://members.mylf.com/m/" in href:
-                    print(link)
-                    add_shoplyfter_mylf_movie(href)  # This function needs to be implemented
+            if "https://members.mylf.com/m/" in href:
+                print(link)
+                add_shoplyfter_mylf_movie(href)  # This function needs to be implemented
         else:
             print("Failed to bypass Cloudflare")
 
@@ -99,9 +98,9 @@ def download_freeuse_mylf_movies():
     url = "https://members.mylf.com/oauth/login"
 
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument(r"user-data-dir=C:\Users\Nathan\AppData\Local\Google\Chrome\User Data\Profile 1")
 
     driver = webdriver.Chrome(options=options)
 
@@ -113,7 +112,7 @@ def download_freeuse_mylf_movies():
             for cookie in solved_response["solution"]["cookies"]:
                 driver.add_cookie(cookie)
 
-            username_elem = driver.find_element(By.NAME, "username")
+            username_elem = driver.find_element(By.NAME, "email")
             username_elem.send_keys(username)
 
             password_elem = driver.find_element(By.NAME, "password")
@@ -158,10 +157,7 @@ def download_freeuse_mylf_movies():
         driver.quit()
 
 
-def add_shoplyfter_mylf_movie(href):
-    # This function needs to be implemented based on your specific requirements
-    pass
-
 
 if __name__ == "__main__":
-    download_freeuse_mylf_movies()
+    get_freeuse_mylf_movies()
+    # download_freeuse_mylf_movies()
