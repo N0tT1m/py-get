@@ -48,7 +48,7 @@ def get_freeuse_mylf_movies():
     options = webdriver.ChromeOptions()
     options.add_argument(r"user-data-dir=C:\Users\Nathan\AppData\Local\Google\Chrome\User Data\Profile 1")
 
-    chrome_path = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 
     service = Service(executable_path=chrome_path)
 
