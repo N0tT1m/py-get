@@ -23,6 +23,69 @@ def solve_cloudflare(url, method="GET", data=None):
     response = requests.post(FLARESOLVERR_URL, json=payload)
     return response.json()
 
+import logging
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException, WebDriverException
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+def setup_chrome_driver():
+    options = Options()
+
+    options = Options()
+    options.add_argument("--verbose")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    options.add_experimental_option("detach", True)
+
+    options.add_argument(r"user-data-dir=C:\Users\Nathan\AppData\Local\Google\Chrome\User Data\Profile 1")
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
+
+    # Path to ChromeDriver, not Chrome browser
+    chromedriver_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"  # Update this path
+    if not os.path.exists(chromedriver_path):
+        logger.error(f"ChromeDriver not found at {chromedriver_path}")
+        return None
+
+    service = Service(executable_path=r"C:\Program Files\Google\Chrome\Application\chrome.exe")
+
+    try:
+        driver = webdriver.Chrome(service=service, options=options)
+        logger.info("Chrome driver initialized successfully")
+        return driver
+    except WebDriverException as e:
+        logger.error(f"Failed to initialize Chrome driver: {e}")
+        return None
+
+def navigate_to_page(driver, url, timeout=10):
+    if driver is None:
+        logger.error("Driver is not initialized")
+        return False
+
+    try:
+        logger.info(f"Attempting to navigate to {url}")
+        driver.get(url)
+        WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+        logger.info(f"Successfully navigated to {url}")
+        return True
+    except TimeoutException:
+        logger.error(f"Timed out while trying to load {url}")
+        logger.debug(f"Current URL: {driver.current_url}")
+        logger.debug(f"Page source: {driver.page_source[:500]}...")  # Log first 500 chars of page source
+        return False
+    except WebDriverException as e:
+        logger.error(f"An error occurred while navigating to {url}: {e}")
+        return False
 
 def download_freeuse_mylf_file(name, url):
     time.sleep(30)
@@ -40,53 +103,46 @@ def download_freeuse_mylf_file(name, url):
 
 
 def get_freeuse_mylf_movies():
-    username = os.environ.get("TEAMSKEET_USERNAME", "")
-    password = os.environ.get("TEAMSKEET_PASSWORD", "")
+    driver = setup_chrome_driver()
+    if driver:
+        username = os.environ.get("TEAMSKEET_USERNAME", "")
+        password = os.environ.get("TEAMSKEET_PASSWORD", "")
 
-    url = "https://members.mylf.com/oauth/login"
+        url = "https://members.mylf.com/oauth/login"
 
-    options = webdriver.ChromeOptions()
-    options.add_argument(r"user-data-dir=C:\Users\Nathan\AppData\Local\Google\Chrome\User Data\Profile 1")
+        try:
+            driver.get(url)
+            time.sleep(5)  # Wait for 5 seconds
+            print(f"Current URL: {driver.current_url}")
 
-    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+            username_elem = driver.find_element(By.NAME, "email")
+            time.sleep(30)
+            username_elem.send_keys(username)
 
-    service = Service(executable_path=chrome_path)
+            password_elem = driver.find_element(By.NAME, "password")
+            time.sleep(30)
+            password_elem.send_keys(password)
 
-    driver = webdriver.Chrome(service=service, options=options)
+            input("Press Enter to continue...")
 
-    try:
-        driver.get(url)
-        time.sleep(5)  # Wait for 5 seconds
-        print(f"Current URL: {driver.current_url}")
+            time.sleep(10)
 
-        username_elem = driver.find_element(By.NAME, "email")
-        time.sleep(30)
-        username_elem.send_keys(username)
+            site = "https://members.mylf.com/site/freeuse-milf"
+            driver.get(site)
 
-        password_elem = driver.find_element(By.NAME, "password")
-        time.sleep(30)
-        password_elem.send_keys(password)
+            links = driver.find_elements(By.XPATH, "//a[contains(@class, 'card--movie__thumnbail-wrapper')]")
+            for link in links:
+                href = link.get_attribute("href")
+                print(href)
 
-        input("Press Enter to continue...")
+                if "https://members.mylf.com/m/" in href:
+                    print(link)
+                    add_shoplyfter_mylf_movie(href)  # This function needs to be implemented
+            else:
+                print("Failed to bypass Cloudflare")
 
-        time.sleep(10)
-
-        site = "https://members.mylf.com/site/freeuse-milf"
-        driver.get(site)
-
-        links = driver.find_elements(By.XPATH, "//a[contains(@class, 'card--movie__thumnbail-wrapper')]")
-        for link in links:
-            href = link.get_attribute("href")
-            print(href)
-
-            if "https://members.mylf.com/m/" in href:
-                print(link)
-                add_shoplyfter_mylf_movie(href)  # This function needs to be implemented
-        else:
-            print("Failed to bypass Cloudflare")
-
-    finally:
-        driver.quit()
+        finally:
+            driver.quit()
 
 
 def download_freeuse_mylf_movies():
